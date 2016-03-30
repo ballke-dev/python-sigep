@@ -15,10 +15,10 @@ Usage
 
 For send a simple query: ::
 
-    from sigep import consultaCEP
+    from sigep import ConsultaCEP
 
     params = {'cep': '89802100'}
-    query = consultaCEP(**params)
+    query = ConsultaCEP(**params)
     data = query.do() # dict with the returned data
 
 To see more operations see the file: "tests.py"
