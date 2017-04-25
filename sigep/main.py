@@ -34,10 +34,13 @@ class ConsultaCEP(BaseConnObject):
         self.cep = clean_postcode(cep)
         self.tags += ['bairro', 'cep', 'cidade', 'complemento', 'complemento2', 'end', 'id', 'uf']
 
-    def do(self):
+    def do(self, timeout=None):
         self.documento = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), self.template), 'r').read() % self.__dict__
         self.requisicao = urllib2.Request(self.url, self.documento, self.headers)
-        self.resposta = urllib2.urlopen(self.requisicao)
+        if isinstance(timeout, int):
+            self.resposta = urllib2.urlopen(self.requisicao, timeout=timeout)
+        else:
+            self.resposta = urllib2.urlopen(self.requisicao)
         self.conteudo = iso_2_utf(self.resposta.read())
 
         self.dom = xml.dom.minidom.parseString(self.conteudo)
