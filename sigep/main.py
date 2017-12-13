@@ -2,6 +2,7 @@
 import os
 import xml.dom.minidom
 import urllib2
+import socket
 from util import *
 
 SANDBOX_URL = 'https://apphom.correios.com.br/SigepMasterJPA/AtendeClienteService/AtendeCliente?wsdl'
@@ -26,6 +27,22 @@ class SigepException(Exception):
         return u'%s - %s' % (self.id, self.message)
 
 
+class TimeoutError(Exception):
+    def __init__(self, message='connection timed out'):
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+
+class UnavailableError(Exception):
+    def __init__(self, message='service unavailable'):
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+
 class ConsultaCEP(BaseConnObject):
     template = 'templates/consultaCEP.xml'
 
@@ -37,14 +54,21 @@ class ConsultaCEP(BaseConnObject):
     def do(self, timeout=None):
         self.documento = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), self.template), 'r').read() % self.__dict__
         self.requisicao = urllib2.Request(self.url, self.documento, self.headers)
-        if isinstance(timeout, int):
+
+        if not isinstance(timeout, int):
+            timeout = socket._GLOBAL_DEFAULT_TIMEOUT
+
+        try:
             self.resposta = urllib2.urlopen(self.requisicao, timeout=timeout)
-        else:
-            self.resposta = urllib2.urlopen(self.requisicao)
+        except urllib2.URLError, e:
+            if e.code == 500:
+                raise
+            raise UnavailableError("%r" % e)
+        except socket.timeout:
+            raise TimeoutError("%r" % e)
+
         self.conteudo = iso_2_utf(self.resposta.read())
-
         self.dom = xml.dom.minidom.parseString(self.conteudo)
-
         dados = {}
 
         for tag in self.tags:
