@@ -60,11 +60,13 @@ class ConsultaCEP(BaseConnObject):
 
         try:
             self.resposta = urllib2.urlopen(self.requisicao, timeout=timeout)
-        except urllib2.URLError, e:
+        except urllib2.HTTPError, e:
             if e.code == 500:
                 raise
             raise UnavailableError("%r" % e)
-        except socket.timeout:
+        except urllib2.URLError, e:
+            raise UnavailableError("%r" % e)
+        except socket.timeout, e:
             raise TimeoutError("%r" % e)
 
         self.conteudo = iso_2_utf(self.resposta.read())
