@@ -3,7 +3,6 @@ import os
 import xml.dom.minidom
 import urllib2
 import socket
-import ssl
 from util import *
 
 SANDBOX_URL = 'https://apphom.correios.com.br/SigepMasterJPA/AtendeClienteService/AtendeCliente?wsdl'
@@ -65,14 +64,10 @@ class ConsultaCEP(BaseConnObject):
             if e.code == 500:
                 raise
             raise UnavailableError("%r" % e)
-        except urllib2.URLError, e:
-            raise UnavailableError("%r" % e)
         except socket.timeout, e:
             raise TimeoutError("%r" % e)
-        except ssl.SSLError, e:
-            raise TimeoutError("%r" % e)
         except Exception, e:
-            raise
+            raise UnavailableError("%r" % e)
 
         self.conteudo = iso_2_utf(self.resposta.read())
         self.dom = xml.dom.minidom.parseString(self.conteudo)
